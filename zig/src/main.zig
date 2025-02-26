@@ -5,6 +5,8 @@ const zap = @import("zap");
 
 const MAIN_DB = "zig.db";
 const table = "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY AUTOINCREMENT,name REAL,timestamp INTEGER);";
+const readq = "SELECT id, name, timestamp FROM test ORDER BY id DESC LIMIT 100;";
+const writeq = "INSERT INTO test(name, timestamp) VALUES(?, ?);";
 
 const SharedAllocator = struct {
     var allocator: std.mem.Allocator = undefined;
@@ -12,13 +14,6 @@ const SharedAllocator = struct {
 
 threadlocal var router: ?Router = null;
 threadlocal var mainDB: ?sqlite.Db = null;
-
-pub fn busy_handler(a: ?*anyopaque, b: c_int) callconv(.C) c_int {
-    _ = a; // autofix
-    _ = b; // autofix
-    std.debug.print("BUSSYSDYSAYDASYDY handler\n", .{});
-    return @intCast(0);
-}
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{
@@ -43,7 +38,7 @@ pub fn main() !void {
                 .max_clients = 100000,
             },
         );
-        zap.enableDebugLog();
+        //zap.enableDebugLog();
 
         listener.listen() catch |err| {
             std.debug.print("\nLISTEN ERROR: {any}\n", .{err});
@@ -52,9 +47,14 @@ pub fn main() !void {
 
         std.debug.print("Visit me on http://127.0.0.1:3000\n", .{});
 
+        const count = std.Thread.getCpuCount() catch |err| {
+            std.debug.print("Error on getting CPU count: {}\n", .{err});
+            return;
+        };
+        std.debug.print("CPU count: {}\n", .{count});
         // start worker threads
         zap.start(.{
-            .threads = 5,
+            .threads = @intCast(count),
             .workers = 1,
         });
     }
@@ -74,19 +74,12 @@ pub fn initMainDBAndRouter() !void {
             },
             .threading_mode = .MultiThread,
         });
+
+        _ = try mainDB.?.pragma(void, .{}, "journal_mode", "WAL");
+        _ = try mainDB.?.pragma(void, .{}, "busy_timeout", "5000");
+
+        try mainDB.?.exec(table, .{}, .{});
     }
-
-    _ = try mainDB.?.pragma(void, .{}, "journal_mode", "WAL");
-
-    try mainDB.?.exec(table, .{}, .{});
-    // const ret = sqlite.c.sqlite3_busy_handler(
-    //     mainDB.?.db,
-    //     busy_handler,
-    //     null,
-    // );
-    const ret = sqlite.c.sqlite3_busy_timeout(mainDB.?.db, @intCast(10000));
-
-    std.debug.print("Busy Handler set: {}\n", .{ret});
 
     if (router == null) {
         std.debug.print("Router is initting for Thread ID: {}\n", .{std.Thread.getCurrentId()});
@@ -108,13 +101,8 @@ pub fn on_request(r: zap.Request) void {
         return;
     };
 
-    std.debug.print("Thread ID: {}\n", .{std.Thread.getCurrentId()});
-    std.debug.print("address: {*}\n", .{&router});
-
     if (r.path) |path| {
-        std.debug.print("Request path: {s}\n", .{path});
         if (std.mem.eql(u8, path, "/read")) {
-            std.debug.print("Read request\n", .{});
             router.?.read(r) catch |err| {
                 std.debug.print("READ ERROR", .{});
                 std.debug.print("Error occurred: {}\n", .{err});
@@ -138,14 +126,14 @@ pub fn on_request(r: zap.Request) void {
 }
 
 const Router = struct {
-    get: sqlite.Statement(.{}, sqlite.ParsedQuery("SELECT id, name, timestamp FROM test ORDER BY id DESC LIMIT 100;")) = undefined,
-    put: sqlite.Statement(.{}, sqlite.ParsedQuery("INSERT INTO test(name, timestamp) VALUES(?, ?);")) = undefined,
+    get: sqlite.Statement(.{}, sqlite.ParsedQuery(readq)) = undefined,
+    put: sqlite.Statement(.{}, sqlite.ParsedQuery(writeq)) = undefined,
 
     const Self = @This();
 
     pub fn init(self: *Self) !void { // autofix
-        self.get = try mainDB.?.prepare("SELECT id, name, timestamp FROM test ORDER BY id DESC LIMIT 100;");
-        self.put = try mainDB.?.prepare("INSERT INTO test(name, timestamp) VALUES(?, ?);");
+        self.get = try mainDB.?.prepare(readq);
+        self.put = try mainDB.?.prepare(writeq);
     }
 
     pub fn read(self: *Self, r: zap.Request) !void {
@@ -174,10 +162,10 @@ const Router = struct {
                     .{ .name = u.value.name, .timestamp = std.time.timestamp() },
                 );
 
-                var jsonbuf: [128]u8 = undefined;
-                if (stringifyBuf(&jsonbuf, .{ .status = "OK", .name = u.value.name }, .{})) |json| {
-                    try r.sendJson(json);
-                }
+                var buf: [256]u8 = undefined;
+                const s = try std.fmt.bufPrint(&buf, "\"status\":\"OK\", \"name\": \"{s}\" ", .{u.value.name});
+
+                try r.sendBody(s);
             }
         }
     }
