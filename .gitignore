@@ -1,0 +1,4 @@
+.zig-cache
+*.db
+*.db-shm
+*.db-wal
