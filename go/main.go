@@ -12,6 +12,8 @@ import (
 )
 
 var db *sql.DB
+var writep *sql.Stmt
+var readp *sql.Stmt
 
 const table = "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY AUTOINCREMENT,name REAL,timestamp INTEGER);"
 const readq = "SELECT id, name, timestamp FROM test ORDER BY id DESC LIMIT 100;"
@@ -38,6 +40,16 @@ func initDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	writep, err = db.Prepare(writeq)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	readp, err = db.Prepare(readq)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 type Item struct {
@@ -47,11 +59,6 @@ type Item struct {
 }
 
 func writeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
 	var item Item
 	err := json.NewDecoder(r.Body).Decode(&item)
 	if err != nil {
@@ -60,7 +67,7 @@ func writeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	item.Timestamp = time.Now().Unix()
-	_, err = db.Exec(writeq, item.Name, item.Timestamp)
+	_, err = writep.Exec(item.Name, item.Timestamp)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Database error %s", err), http.StatusInternalServerError)
 		return
@@ -70,7 +77,7 @@ func writeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func readHandler(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query(readq)
+	rows, err := readp.Query()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Database Q error %s", err), http.StatusInternalServerError)
 		return
@@ -87,7 +94,6 @@ func readHandler(w http.ResponseWriter, r *http.Request) {
 		items = append(items, item)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(items)
 }
 
@@ -96,6 +102,6 @@ func main() {
 	http.HandleFunc("/write", writeHandler)
 	http.HandleFunc("/read", readHandler)
 
-	log.Println("Server started on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Println("Server started on :3000")
+	log.Fatal(http.ListenAndServe(":3000", nil))
 }

@@ -34,7 +34,7 @@ pub fn main() !void {
             .{
                 .on_request = on_request,
                 .port = 3000,
-                .log = true,
+                .log = false,
                 .max_clients = 100000,
             },
         );
