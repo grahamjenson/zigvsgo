@@ -1,0 +1,13 @@
+@base=http://localhost:3000
+
+###
+GET {{base}}/read
+Content-Type: application/json
+
+###
+POST {{base}}/write
+Content-Type: application/json
+
+{
+    "name": "Alice"
+}

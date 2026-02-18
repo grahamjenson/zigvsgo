@@ -22,16 +22,15 @@ pub fn build(b: *std.Build) void {
     ////
 
     ////
-    // ZAP
+    // HTTPZ
     ////
-    const zap = b.dependency("zap", .{
+    const httpz = b.dependency("httpz", .{
         .target = target,
         .optimize = optimize,
-        .openssl = false, // set to true to enable TLS support
     });
 
-    exe.root_module.addImport("zap", zap.module("zap"));
-
+    // the executable from your call to b.addExecutable(...)
+    exe.root_module.addImport("httpz", httpz.module("httpz"));
     ////
     // SQLITE
     ////

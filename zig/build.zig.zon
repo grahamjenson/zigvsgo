@@ -1,16 +1,17 @@
 .{
-    .name = "zig",
+    .name = .zig,
 
     .version = "0.0.0",
-
+    .minimum_zig_version = "0.15.2",
+    .fingerprint = 0xc1ce108177f51106,
     .dependencies = .{
-        .zap = .{
-            .url = "git+https://github.com/zigzap/zap?ref=v0.9.1#ae5c9278335d8e1133cd6d22707323dda712e120",
-            .hash = "12200223d76ab6cd32f75bc2e31463b0b429bb5b2b6fa4ce8f68dea494ca1ec3398b",
+        .httpz = .{
+            .url = "git+https://github.com/karlseguin/http.zig?ref=master#ddaf1989f9c5fe1b139fa846ad273efd4368083a",
+            .hash = "httpz-0.0.0-PNVzrN40BwD3lGAE8l_pShvVIGSlWglmFOsdhJnMVcXR",
         },
         .sqlite = .{
-            .url = "git+https://github.com/vrischmann/zig-sqlite#25614ffd27ddda5feb615a78d1c945595c50efaf",
-            .hash = "1220d7bd38dfca49f4485e8d1c376dbf7a70620e2fd029a11621ed9b5be27534302a",
+            .url = "git+https://github.com/vrischmann/zig-sqlite#0b75ba276d34de3141ec1697e3ef7c836d7b38e7",
+            .hash = "sqlite-3.48.0-F2R_a8eODgD9X8XjvWlZ1K7C-tDuHae4FuShM2N-yIT2",
         },
     },
 
