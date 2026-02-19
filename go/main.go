@@ -103,5 +103,5 @@ func main() {
 	http.HandleFunc("/read", readHandler)
 
 	log.Println("Server started on :3000")
-	log.Fatal(http.ListenAndServe(":3000", nil))
+	log.Fatal(http.ListenAndServe("0.0.0.0:3000", nil))
 }

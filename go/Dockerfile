@@ -10,5 +10,6 @@ RUN go build -v -o /run-app .
 
 FROM debian:bookworm
 
+EXPOSE 3000
 COPY --from=builder /run-app /usr/local/bin/
 CMD ["run-app"]
