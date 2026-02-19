@@ -1,0 +1,6 @@
+# .dockerignore
+.git/
+zig-out/
+zig-cache/
+.zig-cache/
+README.md

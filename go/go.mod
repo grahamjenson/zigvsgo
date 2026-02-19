@@ -1,4 +1,4 @@
-module nz.t1d.blast
+module gosqlitetest
 
 go 1.21.0
 

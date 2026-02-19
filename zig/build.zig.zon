@@ -1,9 +1,9 @@
 .{
-    .name = .zig,
+    .name = .zigtest,
 
     .version = "0.0.0",
     .minimum_zig_version = "0.15.2",
-    .fingerprint = 0xc1ce108177f51106,
+    .fingerprint = 0x28a604c477168207,
     .dependencies = .{
         .httpz = .{
             .url = "git+https://github.com/karlseguin/http.zig?ref=master#ddaf1989f9c5fe1b139fa846ad273efd4368083a",

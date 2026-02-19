@@ -11,7 +11,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const exe = b.addExecutable(.{
-        .name = "zig",
+        .name = "zigtest",
         .root_module = exe_mod,
     });
 

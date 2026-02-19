@@ -29,7 +29,7 @@ pub fn main() !void {
         var app = try initApp();
         std.debug.print("SQLite version: {}\n", .{sqlite.c.SQLITE_VERSION_NUMBER});
 
-        var server = try httpz.Server(*App).init(allocator, .{ .address = .localhost(3000) }, &app);
+        var server = try httpz.Server(*App).init(allocator, .{ .address = .{ .ip = .{ .host = "0.0.0.0", .port = 3000 } } }, &app);
         defer {
             // clean shutdown, finishes serving any live request
             server.stop();
@@ -40,7 +40,7 @@ pub fn main() !void {
         router.get("/read", read, .{});
         router.post("/write", write, .{});
 
-        std.debug.print("Visit me on http://127.0.0.1:3000\n", .{});
+        std.debug.print("Visit me on http://0.0.0.0:3000\n", .{});
         try server.listen();
     }
 
